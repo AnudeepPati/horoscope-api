@@ -17,12 +17,14 @@ export class HoroscopeController {
     try {
       const userId = req.user?.userId;
       if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized: Missing user ID in request" });
       }
 
       const user = await this.userRepo.findOne({ where: { id: userId } });
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ error: "User not found in database" });
       }
 
       const today = new Date();
@@ -37,6 +39,12 @@ export class HoroscopeController {
       if (existing) {
         horoscopeText = existing.horoscopeText;
       } else {
+        if (!user.zodiacSign) {
+          return res
+            .status(400)
+            .json({ error: "Zodiac sign not available for user" });
+        }
+
         horoscopeText = generateHoroscope(
           user.zodiacSign as ZODIAC_SIGN,
           today
@@ -52,14 +60,18 @@ export class HoroscopeController {
         await this.historyRepo.save(record);
       }
 
-      res.json({
+      return res.status(200).json({
         date: today.toISOString().split("T")[0],
         zodiacSign: user.zodiacSign,
         horoscope: horoscopeText,
       });
     } catch (error) {
-      console.error("Horoscope error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Error generating today's horoscope:", error);
+      return res
+        .status(500)
+        .json({
+          error: "Failed to generate horoscope. Please try again later.",
+        });
     }
   }
 
@@ -67,7 +79,9 @@ export class HoroscopeController {
     try {
       const userId = req.user?.userId;
       if (!userId) {
-        return res.status(401).json({ error: "Not authenticated" });
+        return res
+          .status(401)
+          .json({ error: "Unauthorized: Missing user ID in request" });
       }
 
       const sevenDaysAgo = new Date();
@@ -82,19 +96,29 @@ export class HoroscopeController {
         order: { date: "DESC" },
       });
 
+      if (!history.length) {
+        return res
+          .status(404)
+          .json({ error: "No horoscope history found for the past 7 days" });
+      }
+
       const formattedHistory = history.map((h) => ({
         date: h.date.toISOString().split("T")[0],
         zodiacSign: h.zodiacSign,
         horoscope: h.horoscopeText,
       }));
 
-      res.json({
+      return res.status(200).json({
         history: formattedHistory,
         totalRecords: formattedHistory.length,
       });
     } catch (error) {
-      console.error("History error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Error fetching horoscope history:", error);
+      return res
+        .status(500)
+        .json({
+          error: "Failed to fetch horoscope history. Please try again later.",
+        });
     }
   }
 }

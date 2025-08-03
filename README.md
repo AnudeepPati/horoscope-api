@@ -31,3 +31,8 @@ cp .env.example .env
 # Run the server
 npm run dev
 ```
+
+## 🧠 AI Usage
+
+- Parts of this project —> such as boilerplate scaffolding, folder structure ideas, and documentation formatting were assisted by ChatGPT to improve productivity and clarity.
+- All business logic and implementation decisions were written, reviewed, and validated manually.

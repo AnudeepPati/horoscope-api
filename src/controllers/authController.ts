@@ -13,46 +13,65 @@ export class AuthController {
       const { name, email, password, birthdate } = req.body;
 
       if (!name || !email || !password || !birthdate) {
-        return res.status(400).json({ error: "All fields required" });
+        return res.status(400).json({
+          error:
+            "Missing required fields. Please provide name, email, password, and birthdate.",
+        });
       }
 
-      const existing = await this.userRepo.findOne({ where: { email } });
-      if (existing) {
-        return res.status(409).json({ error: "Email already exists" });
+      const existingUser = await this.userRepo.findOne({ where: { email } });
+
+      if (existingUser) {
+        return res.status(409).json({
+          error:
+            "This email is already registered. Please use a different one or login instead.",
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const birthDateObj = new Date(birthdate);
 
-      const birthdateObj = new Date(birthdate);
-      const zodiacSign = calculateZodiacSign(birthdateObj);
+      if (isNaN(birthDateObj.getTime())) {
+        return res.status(400).json({
+          error:
+            "Invalid birthdate format. Please use a valid date string (e.g., YYYY-MM-DD).",
+        });
+      }
 
-      const user = this.userRepo.create({
+      const zodiacSign = calculateZodiacSign(birthDateObj);
+
+      const newUser = this.userRepo.create({
         name,
         email,
         password: hashedPassword,
-        birthdate: birthdateObj,
+        birthdate: birthDateObj,
         zodiacSign,
       });
 
-      const savedUser = await this.userRepo.save(user);
+      const savedUser = await this.userRepo.save(newUser);
       const token = generateToken({
         userId: savedUser.id,
         email: savedUser.email,
       });
 
-      res.status(201).json({
-        message: "User created successfully",
-        user: {
-          id: savedUser.id,
-          name: savedUser.name,
-          email: savedUser.email,
-          zodiacSign: savedUser.zodiacSign,
+      return res.status(201).json({
+        message: "Signup successful! Welcome aboard.",
+        data: {
+          user: {
+            id: savedUser.id,
+            name: savedUser.name,
+            email: savedUser.email,
+            zodiacSign: savedUser.zodiacSign,
+          },
+          token,
         },
-        token,
       });
     } catch (error) {
-      console.error("Signup error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Signup Error:", error);
+      return res.status(500).json({
+        error:
+          "Something went wrong while creating the account. Please try again later.",
+      });
     }
   }
 
@@ -61,34 +80,46 @@ export class AuthController {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ error: "Email and password required" });
+        return res.status(400).json({
+          error: "Please provide both email and password.",
+        });
       }
 
       const user = await this.userRepo.findOne({ where: { email } });
+
       if (!user) {
-        return res.status(401).json({ error: "Invalid credentials" });
+        return res.status(401).json({
+          error: "No account found with this email. Please sign up first.",
+        });
       }
 
-      const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) {
-        return res.status(401).json({ error: "Invalid credentials" });
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        return res.status(401).json({
+          error: "Incorrect password. Please double-check and try again.",
+        });
       }
 
       const token = generateToken({ userId: user.id, email: user.email });
 
-      res.json({
-        message: "Login successful",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          zodiacSign: user.zodiacSign,
+      return res.status(200).json({
+        message: "Login successful!",
+        data: {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            zodiacSign: user.zodiacSign,
+          },
+          token,
         },
-        token,
       });
     } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Login Error:", error);
+      return res.status(500).json({
+        error: "Something went wrong during login. Please try again later.",
+      });
     }
   }
 }
