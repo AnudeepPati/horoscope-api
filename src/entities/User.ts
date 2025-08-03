@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { ZODIAC_SIGN } from "../utils/horoscopeService";
 
 @Entity("users")
 export class User {
@@ -23,8 +24,11 @@ export class User {
   @Column({ type: "date" })
   birthdate: Date;
 
-  @Column({ length: 20 })
-  zodiacSign: string;
+  @Column({
+    type: "enum",
+    enum: ZODIAC_SIGN,
+  })
+  zodiacSign: ZODIAC_SIGN;
 
   @CreateDateColumn()
   createdAt: Date;
