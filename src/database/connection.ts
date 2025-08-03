@@ -10,6 +10,6 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   synchronize: true, // TODO: Change to false and use migrations in production
-  logging: false, // TODO: Enable logging in development for debugging
+  logging: true, // TODO: Change to false in production
   entities: [User, HoroscopeHistory],
 });
