@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node src/app.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "Pati Venkata Satya Sai Anudeep",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -27,6 +29,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^24.1.0",
     "@types/pg": "^8.15.5",
     "nodemon": "^3.1.10",
